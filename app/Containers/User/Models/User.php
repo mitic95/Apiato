@@ -3,9 +3,8 @@
 namespace App\Containers\User\Models;
 
 use App\Containers\Authorization\Traits\AuthorizationTrait;
-use App\Containers\Payment\Contracts\ChargeableInterface;
-use App\Containers\Payment\Models\PaymentAccount;
-use App\Containers\Payment\Traits\ChargeableTrait;
+use App\Containers\Vacation\Models\UserVacationBalance;
+use App\Containers\Vacation\Models\Vacation;
 use App\Ship\Parents\Models\UserModel;
 
 /**
@@ -13,10 +12,9 @@ use App\Ship\Parents\Models\UserModel;
  *
  * @author Mahmoud Zalt <mahmoud@zalt.me>
  */
-class User extends UserModel implements ChargeableInterface
+class User extends UserModel
 {
 
-    use ChargeableTrait;
     use AuthorizationTrait;
 
     /**
@@ -78,9 +76,22 @@ class User extends UserModel implements ChargeableInterface
         'remember_token',
     ];
 
-    public function paymentAccounts()
+    public function vacation()
     {
-        return $this->hasMany(PaymentAccount::class);
+        return $this->hasMany(Vacation::class);
     }
 
+    public function vacationBalance()
+    {
+        return $this->hasOne(UserVacationBalance::class, 'user_id', 'id');
+    }
+
+    /**
+     * @param int $vacationDays
+     * @return bool
+     */
+    public function canTakeVacationBasedOnRequestedDays(int $vacationDays): bool
+    {
+        return $this->vacationBalance->remaining_days - $vacationDays < 0;
+    }
 }
